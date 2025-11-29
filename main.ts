@@ -6,13 +6,15 @@ interface ImageSizeSettings {
 	imagePath: string;
 	useWikiLinks?: boolean;
 	useDirectoryTravel?: boolean;
+	embedding: boolean;
 }
 
 const DEFAULT_SETTINGS: ImageSizeSettings = {
 	imageSize: '550',
 	imagePath: 'img',
 	useWikiLinks: false,
-	useDirectoryTravel: true
+	useDirectoryTravel: true,
+	embedding: true
 }
 
 
@@ -79,7 +81,11 @@ export default class ImageSize extends Plugin {
 									console.log("tfile not found");
 									return;
 								}
-								const markdownImage = fm.generateMarkdownLink(tfile, imagePathT, '', this.settings.imageSize);
+								let markdownImage = fm.generateMarkdownLink(tfile, imagePathT, '', this.settings.imageSize);
+
+								if (this.settings.embedding) {
+									markdownImage = `!${markdownImage}`;
+								}
 				
 								editor.replaceRange(markdownImage, cursor);
 								// 移动光标至行尾
@@ -148,6 +154,16 @@ class ImageSizeSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.useDirectoryTravel ?? true)
 				.onChange(async (value) => {
 					this.plugin.settings.useDirectoryTravel = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Enable images embedding')
+			.setDesc("Adds ! before [[ so the image is visible in reading and live preview modes")
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.embedding ?? true)
+				.onChange(async (value) => {
+					this.plugin.settings.embedding = value;
 					await this.plugin.saveSettings();
 				}));
 
